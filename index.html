@@ -21,7 +21,7 @@ body {
   z-index: 1;
 }
 
-/* bottom sheet UI */
+/* bottom sheet */
 #sheet {
   position: absolute;
   left: 0;
@@ -33,46 +33,46 @@ body {
   background: #fff;
   border-radius: 24px 24px 0 0;
 
-  height: 45vh;
-  max-height: 45vh;
+  height: 80vh;
+  max-height: 80vh;
+
+  transform: translateY(45vh);
 
   box-shadow: 0 -10px 30px rgba(0,0,0,.15);
 
   display: flex;
   flex-direction: column;
+
+  will-change: transform;
 }
 
-/* handle */
 #handle {
   width: 40px;
   height: 5px;
   background: #E5E8EB;
-  border-radius: 100px;
+  border-radius: 999px;
   margin: 10px auto;
+  cursor: grab;
 }
 
-/* header */
 .header {
   padding: 0 16px 10px;
   font-size: 18px;
   font-weight: 800;
-  color: #111;
 }
 
-/* list */
 #list {
   flex: 1;
   overflow-y: auto;
   padding: 0 16px 16px;
 }
 
-/* card */
+/* 카드 */
 .card {
   background: #F6F7F9;
   padding: 12px;
   border-radius: 14px;
   margin-bottom: 10px;
-  cursor: pointer;
 }
 
 .card-title {
@@ -86,16 +86,13 @@ body {
   margin-top: 4px;
 }
 
-/* marker */
-.marker {
-  background: #3182F6;
-  color: #fff;
+/* 버튼 */
+.save-btn {
+  margin-top: 8px;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 8px;
+  border: none;
   font-size: 12px;
-  font-weight: 700;
-  border: 2px solid #fff;
-  white-space: nowrap;
 }
 </style>
 </head>
@@ -115,10 +112,9 @@ body {
 let map;
 let cafes = [];
 let markers = [];
+let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 
-/* ───────────────
-   지도 초기화
-──────────────── */
+/* ---------------- 지도 ---------------- */
 function initMap() {
 
   navigator.geolocation.getCurrentPosition(pos => {
@@ -133,7 +129,6 @@ function initMap() {
         level: 4
       });
 
-      // 내 위치
       new kakao.maps.Marker({
         map,
         position: new kakao.maps.LatLng(lat, lng)
@@ -146,9 +141,7 @@ function initMap() {
 
 }
 
-/* ───────────────
-   카페 API
-──────────────── */
+/* ---------------- API ---------------- */
 function loadCafes(lat, lng) {
 
   fetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&x=${lng}&y=${lat}&radius=2000`, {
@@ -159,22 +152,22 @@ function loadCafes(lat, lng) {
   .then(res => res.json())
   .then(data => {
 
-    cafes = (data.documents || []).map(p => ({
-      name: p.place_name,
-      lat: p.y,
-      lng: p.x,
-      address: p.address_name
-    }));
+    cafes = (data.documents || [])
+      .filter(c => !["보드게임", "PC방", "스터디카페"].some(b => c.place_name.includes(b)))
+      .map(c => ({
+        name: c.place_name,
+        lat: c.y,
+        lng: c.x,
+        address: c.address_name
+      }));
 
-    renderMap();
     renderList();
+    renderMap();
   });
 
 }
 
-/* ───────────────
-   마커 렌더
-──────────────── */
+/* ---------------- 지도 마커 ---------------- */
 function renderMap() {
 
   markers.forEach(m => m.setMap(null));
@@ -183,8 +176,16 @@ function renderMap() {
   cafes.forEach(c => {
 
     const el = document.createElement("div");
-    el.className = "marker";
     el.innerText = "☕ " + c.name;
+    el.style = `
+      background:#3182F6;
+      color:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      border:2px solid #fff;
+    `;
 
     const marker = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(c.lat, c.lng),
@@ -195,12 +196,9 @@ function renderMap() {
     marker.setMap(map);
     markers.push(marker);
   });
-
 }
 
-/* ───────────────
-   리스트 UI
-──────────────── */
+/* ---------------- 리스트 ---------------- */
 function renderList() {
 
   const list = document.getElementById("list");
@@ -211,23 +209,112 @@ function renderList() {
     const div = document.createElement("div");
     div.className = "card";
 
+    const isFav = favorites.some(f => f.name === c.name);
+
     div.innerHTML = `
       <div class="card-title">${c.name}</div>
       <div class="card-sub">${c.address}</div>
-    `;
 
-    div.onclick = () => {
-      map.setCenter(new kakao.maps.LatLng(c.lat, c.lng));
-    };
+      <button class="save-btn"
+        style="background:${isFav ? '#3182F6' : '#E5E8EB'};color:${isFav ? '#fff' : '#333'}"
+        onclick='toggleFavorite(${JSON.stringify(c)})'>
+        ${isFav ? "💙 저장됨" : "🔖 저장"}
+      </button>
+    `;
 
     list.appendChild(div);
   });
-
 }
 
-/* ───────────────
-   실행
-──────────────── */
+/* ---------------- 저장 ---------------- */
+function toggleFavorite(cafe) {
+
+  const exists = favorites.find(f => f.name === cafe.name);
+
+  if (exists) {
+    favorites = favorites.filter(f => f.name !== cafe.name);
+  } else {
+    favorites.push(cafe);
+  }
+
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  renderList();
+}
+
+/* ---------------- Bottom Sheet (inertia + snap) ---------------- */
+const sheet = document.getElementById("sheet");
+const handle = document.getElementById("handle");
+
+let startY = 0;
+let startTranslate = 45;
+let current = 45;
+let velocity = 0;
+let lastY = 0;
+let lastT = 0;
+let dragging = false;
+
+function setSheet(v, anim=false){
+  sheet.style.transition = anim ? "0.35s cubic-bezier(.2,.8,.2,1)" : "none";
+  sheet.style.transform = `translateY(${v}vh)`;
+  current = v;
+}
+
+handle.addEventListener("mousedown", start);
+handle.addEventListener("touchstart", start);
+
+function start(e){
+  dragging = true;
+  startY = getY(e);
+  startTranslate = current;
+  lastY = startY;
+  lastT = Date.now();
+  sheet.style.transition = "none";
+}
+
+window.addEventListener("mousemove", move);
+window.addEventListener("touchmove", move);
+
+function move(e){
+  if(!dragging) return;
+
+  const y = getY(e);
+  const diff = y - startY;
+
+  let vh = startTranslate + (diff / window.innerHeight) * 100;
+  vh = Math.max(0, Math.min(70, vh));
+
+  setSheet(vh);
+
+  const now = Date.now();
+  velocity = (y - lastY) / (now - lastT);
+
+  lastY = y;
+  lastT = now;
+}
+
+window.addEventListener("mouseup", end);
+window.addEventListener("touchend", end);
+
+function end(){
+  if(!dragging) return;
+  dragging = false;
+
+  let v = current + velocity * 8;
+
+  const snaps = [0, 25, 45];
+
+  let closest = snaps.reduce((a,b)=>
+    Math.abs(b - v) < Math.abs(a - v) ? b : a
+  );
+
+  setSheet(closest, true);
+}
+
+function getY(e){
+  return e.touches ? e.touches[0].clientY : e.clientY;
+}
+
+/* ---------------- start ---------------- */
 window.onload = initMap;
 
 </script>
