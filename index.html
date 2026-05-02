@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>카공스팟</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap)" rel="stylesheet">
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=b1ee2206235312119496a93a1396ebfe"></script>
 <style>
 :root {
   --bg: #f5f2eb;
@@ -23,274 +23,259 @@
 body { background: #e8e4d8; font-family: var(--font); overflow: hidden; height: 100dvh; }
 
 #app {
-max-width: 430px;
-margin: 0 auto;
-height: 100dvh;
-position: relative;
-overflow: hidden;
-background: #e8e4d8;
+  max-width: 430px;
+  margin: 0 auto;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: #e8e4d8;
 }
 
-/* ── 지도 영역 ── */
 #map-container {
-position: absolute;
-inset: 0;
-bottom: 60px;
+  position: absolute;
+  inset: 0;
+  bottom: 60px;
 }
 #kakao-map { width: 100%; height: 100%; }
 
-/* 지도 위 상단 필터 바 */
 #top-bar {
-position: absolute;
-top: 0; left: 0; right: 0;
-z-index: 10;
-padding: 52px 16px 12px;
-background: linear-gradient(to bottom, rgba(245,242,235,.96) 60%, transparent);
-pointer-events: none;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  padding: 52px 16px 12px;
+  background: linear-gradient(to bottom, rgba(245,242,235,.96) 60%, transparent);
+  pointer-events: none;
 }
 #top-bar > * { pointer-events: auto; }
 
 .top-title {
-font-size: 13px;
-font-weight: 700;
-color: var(–accent);
-letter-spacing: 1.5px;
-margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
 }
 
 .filter-scroll {
-display: flex;
-gap: 8px;
-overflow-x: auto;
-padding-bottom: 2px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .chip {
-padding: 7px 14px;
-border-radius: 100px;
-border: 1.5px solid var(–border);
-background: var(–card);
-color: var(–ink2);
-font-size: 12px;
-font-weight: 700;
-cursor: pointer;
-white-space: nowrap;
-font-family: var(–font);
-transition: all .18s;
-box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font);
+  transition: all .18s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 .chip.active {
-background: var(–ink);
-color: var(–bg);
-border-color: var(–ink);
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
 }
 
-/* ── 지도 위 하단 카드 리스트 ── */
 #list-sheet {
-position: absolute;
-left: 0; right: 0;
-bottom: 60px;
-z-index: 20;
-transition: transform .32s cubic-bezier(.32,1,.5,1);
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 60px;
+  z-index: 20;
+  transition: transform .32s cubic-bezier(.32,1,.5,1);
 }
 
 #sheet-handle-bar {
-display: flex;
-justify-content: center;
-align-items: center;
-gap: 10px;
-padding: 10px 20px 6px;
-cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 6px;
+  cursor: pointer;
 }
 .handle-line { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.2); }
-#sheet-count { font-size: 12px; color: var(–ink3); font-weight: 600; }
+#sheet-count { font-size: 12px; color: var(--ink3); font-weight: 600; }
 
 #card-list {
-display: flex;
-gap: 12px;
-overflow-x: auto;
-padding: 0 16px 16px;
-scroll-snap-type: x mandatory;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 16px 16px;
+  scroll-snap-type: x mandatory;
 }
 
-/* ── 미니 카드 ── */
 .mini-card {
-min-width: 240px; max-width: 240px;
-background: var(–card);
-border-radius: 20px;
-padding: 16px;
-flex-shrink: 0;
-scroll-snap-align: start;
-cursor: pointer;
-box-shadow: 0 4px 20px rgba(0,0,0,.12);
-transition: transform .15s;
-border: 1.5px solid var(–border);
+  min-width: 240px; max-width: 240px;
+  background: var(--card);
+  border-radius: 20px;
+  padding: 16px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  transition: transform .15s;
+  border: 1.5px solid var(--border);
 }
 .mini-card:active { transform: scale(0.97); }
 
 .mini-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .mini-emoji {
-width: 44px; height: 44px;
-background: var(–bg);
-border-radius: 12px;
-display: flex; align-items: center; justify-content: center;
-font-size: 22px; flex-shrink: 0;
+  width: 44px; height: 44px;
+  background: var(--bg);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
 }
-.mini-name { font-size: 15px; font-weight: 700; color: var(–ink); }
-.mini-meta { font-size: 11px; color: var(–ink3); margin-top: 2px; }
+.mini-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.mini-meta { font-size: 11px; color: var(--ink3); margin-top: 2px; }
 .mini-score { margin-left: auto; font-size: 13px; font-weight: 700; flex-shrink: 0; }
 .mini-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-.mini-tag { font-size: 10px; padding: 3px 9px; border-radius: 100px; background: #f0ece2; color: var(–ink2); font-weight: 600; }
+.mini-tag { font-size: 10px; padding: 3px 9px; border-radius: 100px; background: #f0ece2; color: var(--ink2); font-weight: 600; }
 
-/* ── 하단 탭바 ── */
 #bottom-nav {
-position: absolute;
-bottom: 0; left: 0; right: 0;
-height: 60px;
-background: var(–card);
-border-top: 1.5px solid var(–border);
-display: flex;
-z-index: 30;
-padding-bottom: env(safe-area-inset-bottom, 0px);
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--card);
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  z-index: 30;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .nav-btn {
-flex: 1; background: none; border: none; cursor: pointer;
-display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 0;
+  flex: 1; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 0;
 }
 .nav-icon { font-size: 20px; line-height: 1; transition: transform .2s; }
-.nav-label { font-size: 10px; font-weight: 700; color: var(–ink3); letter-spacing: .5px; transition: color .2s; }
+.nav-label { font-size: 10px; font-weight: 700; color: var(--ink3); letter-spacing: .5px; transition: color .2s; }
 .nav-btn.active .nav-icon { transform: scale(1.15); }
-.nav-btn.active .nav-label { color: var(–accent); }
+.nav-btn.active .nav-label { color: var(--accent); }
 
-/* ── 전체화면 탭 ── */
 .fullscreen {
-position: absolute;
-inset: 0; bottom: 60px;
-background: var(–bg);
-z-index: 25;
-overflow-y: auto;
-display: none;
-padding-bottom: 20px;
-animation: fadeUp .22s ease;
+  position: absolute;
+  inset: 0; bottom: 60px;
+  background: var(--bg);
+  z-index: 25;
+  overflow-y: auto;
+  display: none;
+  padding-bottom: 20px;
+  animation: fadeUp .22s ease;
 }
 .fullscreen.active { display: block; }
 
 @keyframes fadeUp {
-from { opacity:0; transform:translateY(8px); }
-to   { opacity:1; transform:translateY(0); }
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 
 .full-header {
-padding: 52px 20px 16px;
-background: var(–bg);
-position: sticky; top: 0; z-index: 5;
-border-bottom: 1.5px solid var(–border);
+  padding: 52px 20px 16px;
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 5;
+  border-bottom: 1.5px solid var(--border);
 }
-.full-title { font-size: 22px; font-weight: 900; color: var(–ink); margin-bottom: 14px; }
+.full-title { font-size: 22px; font-weight: 900; color: var(--ink); margin-bottom: 14px; }
 
-/* ── 카페 리스트 카드 ── */
 .cafe-card {
-background: var(–card);
-border: 1.5px solid var(–border);
-border-radius: 18px;
-padding: 16px;
-margin: 0 20px 12px;
-cursor: pointer;
-transition: transform .15s;
-position: relative; overflow: hidden;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  margin: 0 20px 12px;
+  cursor: pointer;
+  transition: transform .15s;
+  position: relative; overflow: hidden;
 }
 .cafe-card:active { transform: scale(0.97); }
 .cafe-card::before {
-content: ‘’; position: absolute;
-top: 0; left: 0; width: 4px; height: 100%;
-background: var(–accent); opacity: 0; transition: opacity .2s;
+  content: ''; position: absolute;
+  top: 0; left: 0; width: 4px; height: 100%;
+  background: var(--accent); opacity: 0; transition: opacity .2s;
 }
 .cafe-card:active::before { opacity: 1; }
 
 .cafe-top { display: flex; gap: 12px; align-items: flex-start; }
-.cafe-emoji { width:52px; height:52px; background:var(–bg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.cafe-emoji { width:52px; height:52px; background:var(--bg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
 .cafe-info { flex:1; min-width:0; }
 .cafe-name-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.cafe-name { font-size:15px; font-weight:700; color:var(–ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cafe-name { font-size:15px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cafe-score { font-size:13px; font-weight:700; flex-shrink:0; }
-.cafe-meta { font-size:11px; color:var(–ink3); margin-top:2px; }
-.cafe-mood { font-size:12px; color:var(–ink2); margin-top:3px; }
+.cafe-meta { font-size:11px; color:var(--ink3); margin-top:2px; }
+.cafe-mood { font-size:12px; color:var(--ink2); margin-top:3px; }
 .tag-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:11px; }
 .tag { font-size:11px; padding:4px 10px; border-radius:100px; background:#1a1710; color:#f5f2eb; font-weight:600; white-space:nowrap; }
-.tag.hl { background: var(–accent); }
+.tag.hl { background: var(--accent); }
 
-/* ── 상세 시트 ── */
 #detail-overlay {
-display: none;
-position: fixed; inset: 0;
-background: rgba(0,0,0,.5);
-z-index: 100;
-backdrop-filter: blur(4px);
-align-items: flex-end;
-justify-content: center;
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  align-items: flex-end;
+  justify-content: center;
 }
 #detail-overlay.open { display: flex; }
 
 #detail-sheet {
-background: var(–card);
-border-radius: 28px 28px 0 0;
-padding: 0 20px 40px;
-width: 100%; max-width: 430px;
-max-height: 88vh; overflow-y: auto;
-transform: translateY(100%);
-transition: transform .32s cubic-bezier(.32,1,.5,1);
+  background: var(--card);
+  border-radius: 28px 28px 0 0;
+  padding: 0 20px 40px;
+  width: 100%; max-width: 430px;
+  max-height: 88vh; overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.32,1,.5,1);
 }
 #detail-overlay.open #detail-sheet { transform: translateY(0); }
 
 .detail-handle { display:flex; justify-content:center; padding:14px 0 10px; }
-.detail-handle-bar { width:40px; height:4px; border-radius:2px; background:var(–border); }
-.detail-name { font-size:20px; font-weight:900; color:var(–ink); }
-.detail-sub { font-size:12px; color:var(–ink3); margin-top:2px; }
+.detail-handle-bar { width:40px; height:4px; border-radius:2px; background:var(--border); }
+.detail-name { font-size:20px; font-weight:900; color:var(--ink); }
+.detail-sub { font-size:12px; color:var(--ink3); margin-top:2px; }
 
 .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
 .info-cell { background:#f5f2eb; border-radius:14px; padding:12px 14px; }
-.info-label { font-size:11px; color:var(–ink3); margin-bottom:4px; }
-.info-val { font-size:13px; font-weight:700; color:var(–ink); }
+.info-label { font-size:11px; color:var(--ink3); margin-bottom:4px; }
+.info-val { font-size:13px; font-weight:700; color:var(--ink); }
 
 .review-box { background:#f5f2eb; border-radius:14px; padding:14px 16px; margin-bottom:18px; }
-.review-label { font-size:11px; color:var(–ink3); font-weight:600; margin-bottom:6px; }
-.review-text { font-size:13px; color:var(–ink2); line-height:1.65; }
+.review-label { font-size:11px; color:var(--ink3); font-weight:600; margin-bottom:6px; }
+.review-text { font-size:13px; color:var(--ink2); line-height:1.65; }
 
 .score-wrap { background:#f5f2eb; border-radius:14px; padding:14px 16px; margin-bottom:14px; }
-.score-label { font-size:11px; color:var(–ink3); font-weight:600; letter-spacing:1px; margin-bottom:10px; }
+.score-label { font-size:11px; color:var(--ink3); font-weight:600; letter-spacing:1px; margin-bottom:10px; }
 .score-bars { display:flex; gap:4px; align-items:center; }
-.bar-seg { flex:1; height:8px; border-radius:4px; background:var(–border); }
-.bar-seg.on { background:var(–accent); }
-.score-num { font-size:16px; font-weight:700; color:var(–accent); margin-left:10px; }
+.bar-seg { flex:1; height:8px; border-radius:4px; background:var(--border); }
+.bar-seg.on { background:var(--accent); }
+.score-num { font-size:16px; font-weight:700; color:var(--accent); margin-left:10px; }
 
 .cta-row { display:flex; gap:10px; }
-.cta-btn { padding:16px; border-radius:14px; border:none; font-size:15px; font-weight:700; font-family:var(–font); cursor:pointer; transition:opacity .15s; }
+.cta-btn { padding:16px; border-radius:14px; border:none; font-size:15px; font-weight:700; font-family:var(--font); cursor:pointer; transition:opacity .15s; }
 .cta-btn:active { opacity:.8; }
-.cta-main { flex:1; background:var(–ink); color:var(–bg); }
-.cta-save { flex:0 0 52px; background:#f5f2eb; color:var(–ink); font-size:20px; }
+.cta-main { flex:1; background:var(--ink); color:var(--bg); }
+.cta-save { flex:0 0 52px; background:#f5f2eb; color:var(--ink); font-size:20px; }
 
-.empty { text-align:center; padding:60px 20px; color:var(–ink3); }
+.empty { text-align:center; padding:60px 20px; color:var(--ink3); }
 .empty-icon { font-size:48px; margin-bottom:12px; }
 </style>
-
 </head>
 <body>
 <div id="app">
-
-  <!-- 지도 -->
 
   <div id="map-container">
     <div id="kakao-map"></div>
   </div>
 
-  <!-- 지도 위 필터 -->
-
   <div id="top-bar">
     <div class="top-title">☕ 카공스팟</div>
     <div class="filter-scroll" id="tag-chips"></div>
   </div>
-
-  <!-- 지도 위 하단 카드 -->
 
   <div id="list-sheet">
     <div id="sheet-handle-bar" onclick="toggleSheet()">
@@ -300,8 +285,6 @@ transition: transform .32s cubic-bezier(.32,1,.5,1);
     </div>
     <div id="card-list"></div>
   </div>
-
-  <!-- 탐색 전체화면 -->
 
   <div id="screen-search" class="fullscreen">
     <div class="full-header">
@@ -315,8 +298,6 @@ transition: transform .32s cubic-bezier(.32,1,.5,1);
     <div id="search-list"></div>
   </div>
 
-  <!-- 저장 전체화면 -->
-
   <div id="screen-saved" class="fullscreen">
     <div class="full-header">
       <div class="full-title">저장한 카페</div>
@@ -324,8 +305,6 @@ transition: transform .32s cubic-bezier(.32,1,.5,1);
     </div>
     <div id="saved-list" style="margin-top:12px;"></div>
   </div>
-
-  <!-- 하단 탭바 -->
 
   <nav id="bottom-nav">
     <button class="nav-btn active" data-tab="map" onclick="switchTab('map')">
@@ -341,8 +320,6 @@ transition: transform .32s cubic-bezier(.32,1,.5,1);
       <span class="nav-label">저장</span>
     </button>
   </nav>
-
-  <!-- 상세 시트 -->
 
   <div id="detail-overlay" onclick="closeDetail(event)">
     <div id="detail-sheet">
@@ -388,7 +365,6 @@ function filtered() {
   });
 }
 
-/* ── 지도 ── */
 function initMap() {
   map = new kakao.maps.Map(document.getElementById('kakao-map'), {
     center: new kakao.maps.LatLng(37.578, 126.929),
@@ -410,13 +386,16 @@ function renderOverlays() {
       cursor:pointer;`;
     el.textContent = c.img + ' ' + c.name;
     el.onclick = () => openDetail(c.id);
-    const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(c.lat, c.lng), content: el, yAnchor: 1.4 });
+    const ov = new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(c.lat, c.lng),
+      content: el,
+      yAnchor: 1.4
+    });
     ov.setMap(map);
     overlays.push(ov);
   });
 }
 
-/* ── 칩 렌더 ── */
 function renderTagChips(cid, fn) {
   document.getElementById(cid).innerHTML = Object.entries(TAGS).map(([k,v]) =>
     `<button class="chip${activeTags.includes(k)?' active':''}" onclick="${fn}('${k}')">${v.icon} ${v.label}</button>`
@@ -429,7 +408,6 @@ function renderDistrictChips() {
   ).join('');
 }
 
-/* ── 카드 리스트 ── */
 function renderCardList() {
   const r = filtered();
   document.getElementById('sheet-count').textContent = r.length + '개 카페';
@@ -453,13 +431,15 @@ function toggleSheet() {
     sheetOpen ? '' : 'translateY(calc(100% - 42px))';
 }
 
-/* ── 탐색 ── */
 function renderSearchList() {
   const r = filtered();
   document.getElementById('result-count').textContent = r.length + '개 카페';
   const el = document.getElementById('search-list');
   el.innerHTML = '';
-  if (!r.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>조건에 맞는 카페가 없어요</p></div>`; return; }
+  if (!r.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>조건에 맞는 카페가 없어요</p></div>`;
+    return;
+  }
   r.forEach(c => {
     const d = document.createElement('div');
     d.className = 'cafe-card';
@@ -478,13 +458,15 @@ function renderSearchList() {
   });
 }
 
-/* ── 저장 ── */
 function renderSaved() {
   const s = CAFES.filter(c => savedIds.has(c.id));
   document.getElementById('saved-count').textContent = s.length + '곳 저장됨';
   const el = document.getElementById('saved-list');
   el.innerHTML = '';
-  if (!s.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">🔖</div><p>아직 저장한 카페가 없어요</p></div>`; return; }
+  if (!s.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔖</div><p>아직 저장한 카페가 없어요</p></div>`;
+    return;
+  }
   s.forEach(c => {
     const d = document.createElement('div');
     d.className = 'cafe-card';
@@ -503,7 +485,6 @@ function renderSaved() {
   });
 }
 
-/* ── 상세 ── */
 function openDetail(id) {
   const c = CAFES.find(x => x.id === id);
   const isSaved = savedIds.has(id);
@@ -529,7 +510,7 @@ function openDetail(id) {
     </div>
     <div class="cta-row">
       <button class="cta-btn cta-save" id="save-btn-${id}" onclick="toggleSave(${id})">${isSaved?'🔖':'☆'}</button>
-      <button class="cta-btn cta-main" onclick="window.open('https://map.kakao.com/link/map/${c.name},${c.lat},${c.lng}','_blank')">지도에서 보기 →</button>
+      <button class="cta-btn cta-main" onclick="window.open('[map.kakao.com](https://map.kakao.com/link/map/${c.name},${c.lat},${c.lng})','_blank')">지도에서 보기 →</button>
     </div>`;
   const ov = document.getElementById('detail-overlay');
   ov.style.display = 'flex';
@@ -550,7 +531,6 @@ function toggleSave(id) {
   if (btn) btn.textContent = savedIds.has(id) ? '🔖' : '☆';
 }
 
-/* ── 탭 전환 ── */
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
@@ -576,27 +556,11 @@ function setDistrict(d) {
   activeDistrict = d; renderDistrictChips(); renderSearchList();
 }
 
-/* ── 초기화 ── */
 window.addEventListener('load', () => {
-  // 카카오맵 SDK 로드 시도
-  const script = document.createElement('script');
-  // ↓ 여기에 카카오 앱키를 넣으면 실제 지도가 표시됩니다
-  script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=KAKAO_APP_KEY&autoload=false';
-  script.onload = () => kakao.maps.load(initMap);
-  script.onerror = () => {
-    document.getElementById('kakao-map').innerHTML = `
-      <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#e8ece8;gap:10px;padding:20px;text-align:center;">
-        <div style="font-size:52px;">🗺️</div>
-        <p style="font-size:14px;font-weight:700;color:#4a6a4a;">카카오 API 키 연결 시<br>실제 지도가 표시됩니다</p>
-        <p style="font-size:11px;color:#8aaa8a;">아래 카드를 탭해서 카페 정보를 확인하세요</p>
-      </div>`;
-  };
-  document.head.appendChild(script);
-
-  renderTagChips('tag-chips','toggleTagMap');
+  initMap();
+  renderTagChips('tag-chips', 'toggleTagMap');
   renderCardList();
 });
 </script>
-
 </body>
 </html>
