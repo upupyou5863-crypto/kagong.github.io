@@ -5,23 +5,97 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>카공스팟</title>
 
-<!-- ✔ 안정 SDK 로딩 -->
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=b1ee2206235312119496a93a1396ebfe&autoload=false"></script>
 
 <style>
-body { margin:0; font-family:sans-serif; }
-#kakao-map { width:100%; height:100vh; }
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: -apple-system, sans-serif;
+}
 
-.map-marker{
-  background:#3182F6;
-  color:#fff;
-  padding:6px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:700;
-  border:2px solid #fff;
-  white-space:nowrap;
-  box-shadow:0 4px 10px rgba(0,0,0,.15);
+/* 지도 */
+#kakao-map {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* bottom sheet UI */
+#sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 10;
+
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+
+  height: 45vh;
+  max-height: 45vh;
+
+  box-shadow: 0 -10px 30px rgba(0,0,0,.15);
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* handle */
+#handle {
+  width: 40px;
+  height: 5px;
+  background: #E5E8EB;
+  border-radius: 100px;
+  margin: 10px auto;
+}
+
+/* header */
+.header {
+  padding: 0 16px 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #111;
+}
+
+/* list */
+#list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+}
+
+/* card */
+.card {
+  background: #F6F7F9;
+  padding: 12px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.card-sub {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* marker */
+.marker {
+  background: #3182F6;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid #fff;
+  white-space: nowrap;
 }
 </style>
 </head>
@@ -30,56 +104,52 @@ body { margin:0; font-family:sans-serif; }
 
 <div id="kakao-map"></div>
 
+<div id="sheet">
+  <div id="handle"></div>
+  <div class="header">☕ 카공스팟</div>
+  <div id="list"></div>
+</div>
+
 <script>
 
 let map;
-let markers = [];
 let cafes = [];
+let markers = [];
 
-/* ─────────────────────────
-   안전 지도 초기화
-───────────────────────── */
+/* ───────────────
+   지도 초기화
+──────────────── */
 function initMap() {
 
-  if (!navigator.geolocation) {
-    alert("이 브라우저는 위치 기능을 지원하지 않습니다.");
-    return;
-  }
+  navigator.geolocation.getCurrentPosition(pos => {
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
 
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
+    kakao.maps.load(() => {
 
-      kakao.maps.load(function () {
-
-        map = new kakao.maps.Map(document.getElementById('kakao-map'), {
-          center: new kakao.maps.LatLng(lat, lng),
-          level: 4
-        });
-
-        // 내 위치 마커
-        new kakao.maps.Marker({
-          map,
-          position: new kakao.maps.LatLng(lat, lng)
-        });
-
-        loadNearbyCafes(lat, lng);
+      map = new kakao.maps.Map(document.getElementById("kakao-map"), {
+        center: new kakao.maps.LatLng(lat, lng),
+        level: 4
       });
 
-    },
-    (err) => {
-      alert("위치 권한을 허용해야 사용 가능합니다.");
-      console.log(err);
-    }
-  );
+      // 내 위치
+      new kakao.maps.Marker({
+        map,
+        position: new kakao.maps.LatLng(lat, lng)
+      });
+
+      loadCafes(lat, lng);
+    });
+
+  });
+
 }
 
-/* ─────────────────────────
-   안전 API 호출
-───────────────────────── */
-function loadNearbyCafes(lat, lng) {
+/* ───────────────
+   카페 API
+──────────────── */
+function loadCafes(lat, lng) {
 
   fetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&x=${lng}&y=${lat}&radius=2000`, {
     headers: {
@@ -89,41 +159,31 @@ function loadNearbyCafes(lat, lng) {
   .then(res => res.json())
   .then(data => {
 
-    if (!data || !data.documents) {
-      console.warn("API 응답 없음");
-      return;
-    }
-
-    cafes = data.documents.map(p => ({
-      id: p.id,
+    cafes = (data.documents || []).map(p => ({
       name: p.place_name,
       lat: p.y,
       lng: p.x,
-      address: p.address_name || ""
+      address: p.address_name
     }));
 
-    renderMarkers();
-
-  })
-  .catch(err => {
-    console.error("API 오류:", err);
+    renderMap();
+    renderList();
   });
+
 }
 
-/* ─────────────────────────
-   마커 렌더링
-───────────────────────── */
-function renderMarkers() {
+/* ───────────────
+   마커 렌더
+──────────────── */
+function renderMap() {
 
   markers.forEach(m => m.setMap(null));
   markers = [];
 
-  if (!cafes.length) return;
-
   cafes.forEach(c => {
 
-    const el = document.createElement('div');
-    el.className = 'map-marker';
+    const el = document.createElement("div");
+    el.className = "marker";
     el.innerText = "☕ " + c.name;
 
     const marker = new kakao.maps.CustomOverlay({
@@ -135,11 +195,39 @@ function renderMarkers() {
     marker.setMap(map);
     markers.push(marker);
   });
+
 }
 
-/* ─────────────────────────
+/* ───────────────
+   리스트 UI
+──────────────── */
+function renderList() {
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  cafes.forEach(c => {
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="card-title">${c.name}</div>
+      <div class="card-sub">${c.address}</div>
+    `;
+
+    div.onclick = () => {
+      map.setCenter(new kakao.maps.LatLng(c.lat, c.lng));
+    };
+
+    list.appendChild(div);
+  });
+
+}
+
+/* ───────────────
    실행
-───────────────────────── */
+──────────────── */
 window.onload = initMap;
 
 </script>
