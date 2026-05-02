@@ -5,22 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>카공스팟</title>
-<link href="[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap)" rel="stylesheet">
+<link href="[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap)" rel="stylesheet">
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=b1ee2206235312119496a93a1396ebfe"></script>
 <style>
 :root {
-  --bg: #f5f2eb;
-  --card: #ffffff;
-  --ink: #1a1710;
-  --ink2: #6b6558;
-  --ink3: #a8a094;
-  --accent: #d4521a;
-  --border: #ddd8cc;
-  --font: 'Noto Sans KR', sans-serif;
+  --blue:    #3182F6;
+  --blue-lt: #EBF3FF;
+  --bg:      #F9FAFB;
+  --surface: #FFFFFF;
+  --gray-50: #F9FAFB;
+  --gray-100:#F2F4F6;
+  --gray-200:#E5E8EB;
+  --gray-400:#9EA7AD;
+  --gray-500:#6B7684;
+  --gray-700:#333D4B;
+  --gray-900:#191F28;
+  --red:     #F04452;
+  --green:   #0BA989;
+  --font: 'Noto Sans KR', -apple-system, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.1);
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 ::-webkit-scrollbar { display: none; }
-body { background: #e8e4d8; font-family: var(--font); overflow: hidden; height: 100dvh; }
+
+body {
+  background: var(--gray-100);
+  font-family: var(--font);
+  overflow: hidden;
+  height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
 
 #app {
   max-width: 430px;
@@ -28,67 +48,76 @@ body { background: #e8e4d8; font-family: var(--font); overflow: hidden; height: 
   height: 100dvh;
   position: relative;
   overflow: hidden;
-  background: #e8e4d8;
+  background: var(--gray-100);
 }
 
+/* ── 지도 ── */
 #map-container {
   position: absolute;
   inset: 0;
-  bottom: 60px;
+  bottom: 64px;
 }
 #kakao-map { width: 100%; height: 100%; }
 
+/* ── 상단 바 ── */
 #top-bar {
   position: absolute;
   top: 0; left: 0; right: 0;
   z-index: 10;
-  padding: 52px 16px 12px;
-  background: linear-gradient(to bottom, rgba(245,242,235,.96) 60%, transparent);
+  padding: 56px 16px 14px;
+  background: linear-gradient(to bottom, rgba(249,250,251,.98) 65%, transparent);
   pointer-events: none;
 }
 #top-bar > * { pointer-events: auto; }
 
 .top-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 1.5px;
+  color: var(--blue);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
   margin-bottom: 10px;
 }
 
 .filter-scroll {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   padding-bottom: 2px;
 }
 
 .chip {
-  padding: 7px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
   border-radius: 100px;
-  border: 1.5px solid var(--border);
-  background: var(--card);
-  color: var(--ink2);
+  border: 1.5px solid var(--gray-200);
+  background: var(--surface);
+  color: var(--gray-500);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   font-family: var(--font);
-  transition: all .18s;
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  transition: all .15s;
+  box-shadow: var(--shadow-sm);
 }
+.chip:active { transform: scale(0.96); }
 .chip.active {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  box-shadow: 0 2px 8px rgba(49,130,246,.3);
 }
 
+/* ── 하단 카드 시트 ── */
 #list-sheet {
   position: absolute;
   left: 0; right: 0;
-  bottom: 60px;
+  bottom: 64px;
   z-index: 20;
-  transition: transform .32s cubic-bezier(.32,1,.5,1);
+  transition: transform .3s cubic-bezier(.32,1,.5,1);
 }
 
 #sheet-handle-bar {
@@ -99,213 +128,359 @@ body { background: #e8e4d8; font-family: var(--font); overflow: hidden; height: 
   padding: 10px 20px 6px;
   cursor: pointer;
 }
-.handle-line { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.2); }
-#sheet-count { font-size: 12px; color: var(--ink3); font-weight: 600; }
+.handle-pill {
+  width: 32px; height: 4px;
+  border-radius: 2px;
+  background: rgba(0,0,0,.15);
+}
+#sheet-count {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-weight: 600;
+}
 
 #card-list {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   overflow-x: auto;
-  padding: 0 16px 16px;
+  padding: 4px 16px 16px;
   scroll-snap-type: x mandatory;
 }
 
+/* ── 미니 카드 ── */
 .mini-card {
-  min-width: 240px; max-width: 240px;
-  background: var(--card);
-  border-radius: 20px;
+  min-width: 220px; max-width: 220px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
   padding: 16px;
   flex-shrink: 0;
   scroll-snap-align: start;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  box-shadow: var(--shadow-md);
   transition: transform .15s;
-  border: 1.5px solid var(--border);
 }
-.mini-card:active { transform: scale(0.97); }
+.mini-card:active { transform: scale(0.96); }
 
-.mini-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.mini-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 .mini-emoji {
-  width: 44px; height: 44px;
-  background: var(--bg);
-  border-radius: 12px;
+  width: 40px; height: 40px;
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; flex-shrink: 0;
+  font-size: 20px; flex-shrink: 0;
 }
-.mini-name { font-size: 15px; font-weight: 700; color: var(--ink); }
-.mini-meta { font-size: 11px; color: var(--ink3); margin-top: 2px; }
-.mini-score { margin-left: auto; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-.mini-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-.mini-tag { font-size: 10px; padding: 3px 9px; border-radius: 100px; background: #f0ece2; color: var(--ink2); font-weight: 600; }
+.mini-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-meta { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+.mini-score {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--blue-lt);
+  color: var(--blue);
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+.mini-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.mini-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  background: var(--gray-100);
+  color: var(--gray-500);
+  font-weight: 600;
+}
 
+/* ── 탭바 ── */
 #bottom-nav {
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 60px;
-  background: var(--card);
-  border-top: 1.5px solid var(--border);
+  height: 64px;
+  background: var(--surface);
+  border-top: 1px solid var(--gray-200);
   display: flex;
   z-index: 30;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .nav-btn {
   flex: 1; background: none; border: none; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 0;
 }
-.nav-icon { font-size: 20px; line-height: 1; transition: transform .2s; }
-.nav-label { font-size: 10px; font-weight: 700; color: var(--ink3); letter-spacing: .5px; transition: color .2s; }
-.nav-btn.active .nav-icon { transform: scale(1.15); }
-.nav-btn.active .nav-label { color: var(--accent); }
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-400);
+  letter-spacing: .3px;
+  transition: color .15s;
+}
+.nav-btn.active .nav-label { color: var(--blue); }
+.nav-btn.active .nav-icon { filter: none; }
 
+/* ── 전체화면 탭 ── */
 .fullscreen {
   position: absolute;
-  inset: 0; bottom: 60px;
-  background: var(--bg);
+  inset: 0; bottom: 64px;
+  background: var(--gray-100);
   z-index: 25;
   overflow-y: auto;
   display: none;
   padding-bottom: 20px;
-  animation: fadeUp .22s ease;
+  animation: slideUp .2s ease;
 }
 .fullscreen.active { display: block; }
 
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(8px); }
-  to   { opacity:1; transform:translateY(0); }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .full-header {
-  padding: 52px 20px 16px;
-  background: var(--bg);
+  padding: 56px 20px 16px;
+  background: var(--gray-100);
   position: sticky; top: 0; z-index: 5;
-  border-bottom: 1.5px solid var(--border);
+  border-bottom: 1px solid var(--gray-200);
 }
-.full-title { font-size: 22px; font-weight: 900; color: var(--ink); margin-bottom: 14px; }
+.full-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 14px;
+  letter-spacing: -.5px;
+}
 
+/* ── 카페 카드 (리스트) ── */
 .cafe-card {
-  background: var(--card);
-  border: 1.5px solid var(--border);
-  border-radius: 18px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 16px;
-  margin: 0 20px 12px;
+  margin: 0 16px 10px;
   cursor: pointer;
   transition: transform .15s;
-  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
-.cafe-card:active { transform: scale(0.97); }
-.cafe-card::before {
-  content: ''; position: absolute;
-  top: 0; left: 0; width: 4px; height: 100%;
-  background: var(--accent); opacity: 0; transition: opacity .2s;
-}
-.cafe-card:active::before { opacity: 1; }
+.cafe-card:active { transform: scale(0.98); }
 
 .cafe-top { display: flex; gap: 12px; align-items: flex-start; }
-.cafe-emoji { width:52px; height:52px; background:var(--bg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
-.cafe-info { flex:1; min-width:0; }
-.cafe-name-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.cafe-name { font-size:15px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cafe-score { font-size:13px; font-weight:700; flex-shrink:0; }
-.cafe-meta { font-size:11px; color:var(--ink3); margin-top:2px; }
-.cafe-mood { font-size:12px; color:var(--ink2); margin-top:3px; }
-.tag-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:11px; }
-.tag { font-size:11px; padding:4px 10px; border-radius:100px; background:#1a1710; color:#f5f2eb; font-weight:600; white-space:nowrap; }
-.tag.hl { background: var(--accent); }
+.cafe-emoji {
+  width: 48px; height: 48px;
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.cafe-info { flex: 1; min-width: 0; }
+.cafe-name-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cafe-name {
+  font-size: 15px; font-weight: 700; color: var(--gray-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cafe-score-badge {
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  background: var(--blue-lt); color: var(--blue);
+  padding: 3px 8px; border-radius: 6px;
+}
+.cafe-meta { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+.cafe-mood { font-size: 12px; color: var(--gray-500); margin-top: 4px; font-weight: 500; }
+.tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
+.tag {
+  font-size: 11px; padding: 4px 10px; border-radius: 100px;
+  background: var(--gray-100); color: var(--gray-700); font-weight: 600; white-space: nowrap;
+}
+.tag.hl { background: var(--blue-lt); color: var(--blue); }
 
+/* ── 상세 시트 ── */
 #detail-overlay {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.5);
+  background: rgba(25,31,40,.6);
   z-index: 100;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   align-items: flex-end;
   justify-content: center;
 }
 #detail-overlay.open { display: flex; }
 
 #detail-sheet {
-  background: var(--card);
-  border-radius: 28px 28px 0 0;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
   padding: 0 20px 40px;
   width: 100%; max-width: 430px;
-  max-height: 88vh; overflow-y: auto;
+  max-height: 90vh; overflow-y: auto;
   transform: translateY(100%);
-  transition: transform .32s cubic-bezier(.32,1,.5,1);
+  transition: transform .3s cubic-bezier(.32,1,.5,1);
 }
 #detail-overlay.open #detail-sheet { transform: translateY(0); }
 
-.detail-handle { display:flex; justify-content:center; padding:14px 0 10px; }
-.detail-handle-bar { width:40px; height:4px; border-radius:2px; background:var(--border); }
-.detail-name { font-size:20px; font-weight:900; color:var(--ink); }
-.detail-sub { font-size:12px; color:var(--ink3); margin-top:2px; }
+.detail-handle {
+  display: flex; justify-content: center;
+  padding: 14px 0 16px;
+}
+.detail-handle-bar {
+  width: 36px; height: 4px;
+  border-radius: 2px;
+  background: var(--gray-200);
+}
 
-.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
-.info-cell { background:#f5f2eb; border-radius:14px; padding:12px 14px; }
-.info-label { font-size:11px; color:var(--ink3); margin-bottom:4px; }
-.info-val { font-size:13px; font-weight:700; color:var(--ink); }
+.detail-name {
+  font-size: 22px; font-weight: 800;
+  color: var(--gray-900); letter-spacing: -.3px;
+}
+.detail-sub { font-size: 13px; color: var(--gray-400); margin-top: 3px; }
 
-.review-box { background:#f5f2eb; border-radius:14px; padding:14px 16px; margin-bottom:18px; }
-.review-label { font-size:11px; color:var(--ink3); font-weight:600; margin-bottom:6px; }
-.review-text { font-size:13px; color:var(--ink2); line-height:1.65; }
+.info-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin: 16px 0;
+}
+.info-cell {
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.info-label { font-size: 11px; color: var(--gray-400); margin-bottom: 5px; font-weight: 500; }
+.info-val { font-size: 13px; font-weight: 700; color: var(--gray-900); }
 
-.score-wrap { background:#f5f2eb; border-radius:14px; padding:14px 16px; margin-bottom:14px; }
-.score-label { font-size:11px; color:var(--ink3); font-weight:600; letter-spacing:1px; margin-bottom:10px; }
-.score-bars { display:flex; gap:4px; align-items:center; }
-.bar-seg { flex:1; height:8px; border-radius:4px; background:var(--border); }
-.bar-seg.on { background:var(--accent); }
-.score-num { font-size:16px; font-weight:700; color:var(--accent); margin-left:10px; }
+.review-box {
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.review-label {
+  font-size: 11px; color: var(--gray-400);
+  font-weight: 600; margin-bottom: 8px;
+  letter-spacing: .5px;
+}
+.review-text { font-size: 14px; color: var(--gray-700); line-height: 1.7; }
 
-.cta-row { display:flex; gap:10px; }
-.cta-btn { padding:16px; border-radius:14px; border:none; font-size:15px; font-weight:700; font-family:var(--font); cursor:pointer; transition:opacity .15s; }
-.cta-btn:active { opacity:.8; }
-.cta-main { flex:1; background:var(--ink); color:var(--bg); }
-.cta-save { flex:0 0 52px; background:#f5f2eb; color:var(--ink); font-size:20px; }
+.score-wrap {
+  background: var(--blue-lt);
+  border-radius: var(--radius-md);
+  padding: 16px; margin-bottom: 16px;
+}
+.score-label {
+  font-size: 11px; color: var(--blue);
+  font-weight: 700; letter-spacing: .8px; margin-bottom: 10px;
+}
+.score-bars { display: flex; gap: 5px; align-items: center; }
+.bar-seg {
+  flex: 1; height: 6px; border-radius: 3px;
+  background: rgba(49,130,246,.2);
+}
+.bar-seg.on { background: var(--blue); }
+.score-num {
+  font-size: 18px; font-weight: 800;
+  color: var(--blue); margin-left: 12px;
+}
 
-.empty { text-align:center; padding:60px 20px; color:var(--ink3); }
-.empty-icon { font-size:48px; margin-bottom:12px; }
+.cta-row { display: flex; gap: 8px; }
+.cta-btn {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 15px; font-weight: 700;
+  font-family: var(--font); cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.cta-btn:active { opacity: .85; transform: scale(0.98); }
+.cta-main {
+  flex: 1;
+  background: var(--blue);
+  color: #fff;
+  letter-spacing: -.2px;
+}
+.cta-save {
+  flex: 0 0 52px;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  font-size: 20px;
+}
+
+.empty {
+  text-align: center; padding: 80px 20px;
+  color: var(--gray-400);
+}
+.empty-icon { font-size: 52px; margin-bottom: 14px; }
+.empty p { font-size: 14px; font-weight: 600; }
+
+/* ── 지도 마커 ── */
+.map-marker {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 100px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(49,130,246,.4);
+  border: 2px solid #fff;
+  cursor: pointer;
+  transition: transform .15s;
+}
+.map-marker:active { transform: scale(0.95); }
 </style>
 </head>
 <body>
 <div id="app">
 
+  <!-- 지도 -->
   <div id="map-container">
     <div id="kakao-map"></div>
   </div>
 
+  <!-- 상단 필터 -->
   <div id="top-bar">
     <div class="top-title">☕ 카공스팟</div>
     <div class="filter-scroll" id="tag-chips"></div>
   </div>
 
+  <!-- 하단 카드 리스트 -->
   <div id="list-sheet">
     <div id="sheet-handle-bar" onclick="toggleSheet()">
-      <div class="handle-line"></div>
+      <div class="handle-pill"></div>
       <span id="sheet-count"></span>
-      <div class="handle-line"></div>
+      <div class="handle-pill"></div>
     </div>
     <div id="card-list"></div>
   </div>
 
+  <!-- 탐색 탭 -->
   <div id="screen-search" class="fullscreen">
     <div class="full-header">
       <div class="full-title">카페 탐색</div>
       <div class="filter-scroll" id="district-chips" style="margin-bottom:10px;"></div>
       <div class="filter-scroll" id="tag-chips-search"></div>
     </div>
-    <div style="padding:12px 20px 4px;">
-      <span id="result-count" style="font-size:12px;color:var(--ink3);font-weight:600;"></span>
+    <div style="padding:12px 16px 4px;">
+      <span id="result-count" style="font-size:12px;color:var(--gray-400);font-weight:600;"></span>
     </div>
     <div id="search-list"></div>
   </div>
 
+  <!-- 저장 탭 -->
   <div id="screen-saved" class="fullscreen">
     <div class="full-header">
       <div class="full-title">저장한 카페</div>
-      <div id="saved-count" style="font-size:12px;color:var(--ink3);font-weight:600;margin-top:4px;"></div>
+      <div id="saved-count" style="font-size:12px;color:var(--gray-400);font-weight:600;margin-top:4px;"></div>
     </div>
     <div id="saved-list" style="margin-top:12px;"></div>
   </div>
 
+  <!-- 탭바 -->
   <nav id="bottom-nav">
     <button class="nav-btn active" data-tab="map" onclick="switchTab('map')">
       <span class="nav-icon">🗺️</span>
@@ -321,6 +496,7 @@ body { background: #e8e4d8; font-family: var(--font); overflow: hidden; height: 
     </button>
   </nav>
 
+  <!-- 상세 시트 -->
   <div id="detail-overlay" onclick="closeDetail(event)">
     <div id="detail-sheet">
       <div class="detail-handle"><div class="detail-handle-bar"></div></div>
@@ -355,8 +531,6 @@ let currentTab = 'map', activeTags = [], activeDistrict = '전체';
 let savedIds = new Set(), sheetOpen = true;
 let map, overlays = [];
 
-function scoreColor(s) { return s >= 4.8 ? '#2d5a3d' : s >= 4.6 ? '#b07d1a' : '#888'; }
-
 function filtered() {
   return CAFES.filter(c => {
     const dOk = activeDistrict === '전체' || c.district === activeDistrict;
@@ -365,6 +539,7 @@ function filtered() {
   });
 }
 
+/* ── 지도 ── */
 function initMap() {
   map = new kakao.maps.Map(document.getElementById('kakao-map'), {
     center: new kakao.maps.LatLng(37.578, 126.929),
@@ -378,24 +553,20 @@ function renderOverlays() {
   overlays = [];
   filtered().forEach(c => {
     const el = document.createElement('div');
-    el.style.cssText = `
-      background:#d4521a; color:#fff; border-radius:20px;
-      padding:5px 11px; font-size:12px; font-weight:700;
-      font-family:'Noto Sans KR',sans-serif; white-space:nowrap;
-      box-shadow:0 2px 8px rgba(0,0,0,.3); border:2px solid #fff;
-      cursor:pointer;`;
+    el.className = 'map-marker';
     el.textContent = c.img + ' ' + c.name;
     el.onclick = () => openDetail(c.id);
     const ov = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(c.lat, c.lng),
       content: el,
-      yAnchor: 1.4
+      yAnchor: 1.5
     });
     ov.setMap(map);
     overlays.push(ov);
   });
 }
 
+/* ── 칩 ── */
 function renderTagChips(cid, fn) {
   document.getElementById(cid).innerHTML = Object.entries(TAGS).map(([k,v]) =>
     `<button class="chip${activeTags.includes(k)?' active':''}" onclick="${fn}('${k}')">${v.icon} ${v.label}</button>`
@@ -408,6 +579,7 @@ function renderDistrictChips() {
   ).join('');
 }
 
+/* ── 카드 리스트 ── */
 function renderCardList() {
   const r = filtered();
   document.getElementById('sheet-count').textContent = r.length + '개 카페';
@@ -419,7 +591,7 @@ function renderCardList() {
           <div class="mini-name">${c.name}</div>
           <div class="mini-meta">${c.district} · ${c.hours}</div>
         </div>
-        <div class="mini-score" style="color:${scoreColor(c.score)}">★ ${c.score}</div>
+        <div class="mini-score">★ ${c.score}</div>
       </div>
       <div class="mini-tags">${c.tags.map(t=>`<span class="mini-tag">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>
     </div>`).join('');
@@ -431,6 +603,7 @@ function toggleSheet() {
     sheetOpen ? '' : 'translateY(calc(100% - 42px))';
 }
 
+/* ── 탐색 ── */
 function renderSearchList() {
   const r = filtered();
   document.getElementById('result-count').textContent = r.length + '개 카페';
@@ -447,7 +620,10 @@ function renderSearchList() {
       <div class="cafe-top">
         <div class="cafe-emoji">${c.img}</div>
         <div class="cafe-info">
-          <div class="cafe-name-row"><span class="cafe-name">${c.name}</span><span class="cafe-score" style="color:${scoreColor(c.score)}">★ ${c.score}</span></div>
+          <div class="cafe-name-row">
+            <span class="cafe-name">${c.name}</span>
+            <span class="cafe-score-badge">★ ${c.score}</span>
+          </div>
           <div class="cafe-meta">${c.district} · ${c.hours}</div>
           <div class="cafe-mood">${c.mood}</div>
         </div>
@@ -458,6 +634,7 @@ function renderSearchList() {
   });
 }
 
+/* ── 저장 ── */
 function renderSaved() {
   const s = CAFES.filter(c => savedIds.has(c.id));
   document.getElementById('saved-count').textContent = s.length + '곳 저장됨';
@@ -474,7 +651,10 @@ function renderSaved() {
       <div class="cafe-top">
         <div class="cafe-emoji">${c.img}</div>
         <div class="cafe-info">
-          <div class="cafe-name-row"><span class="cafe-name">${c.name}</span><span class="cafe-score" style="color:${scoreColor(c.score)}">★ ${c.score}</span></div>
+          <div class="cafe-name-row">
+            <span class="cafe-name">${c.name}</span>
+            <span class="cafe-score-badge">★ ${c.score}</span>
+          </div>
           <div class="cafe-meta">${c.district} · ${c.hours}</div>
           <div class="cafe-mood">${c.mood}</div>
         </div>
@@ -485,15 +665,21 @@ function renderSaved() {
   });
 }
 
+/* ── 상세 ── */
 function openDetail(id) {
   const c = CAFES.find(x => x.id === id);
   const isSaved = savedIds.has(id);
+  const filled = Math.round((c.score - 3.5) * 2 + 2);
   const bars = [1,2,3,4,5].map(i =>
-    `<div class="bar-seg${i <= Math.round((c.score-3.5)*2+2)?' on':''}"></div>`).join('');
+    `<div class="bar-seg${i <= filled ? ' on' : ''}"></div>`).join('');
+
   document.getElementById('detail-content').innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-      <div style="width:60px;height:60px;background:#f5f2eb;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${c.img}</div>
-      <div><div class="detail-name">${c.name}</div><div class="detail-sub">${c.district} · ${c.mood}</div></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:56px;height:56px;background:var(--gray-100);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${c.img}</div>
+      <div>
+        <div class="detail-name">${c.name}</div>
+        <div class="detail-sub">${c.district} · ${c.mood}</div>
+      </div>
     </div>
     <div class="score-wrap">
       <div class="score-label">카공 적합도</div>
@@ -503,15 +689,16 @@ function openDetail(id) {
       <div class="info-cell"><div class="info-label">📍 위치</div><div class="info-val">${c.address}</div></div>
       <div class="info-cell"><div class="info-label">🕐 운영시간</div><div class="info-val">${c.hours}</div></div>
     </div>
-    <div class="tag-row" style="margin-bottom:14px;">${c.tags.map(t=>`<span class="tag">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>
+    <div class="tag-row" style="margin-bottom:16px;">${c.tags.map(t=>`<span class="tag">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>
     <div class="review-box">
       <div class="review-label">💬 리뷰 요약</div>
       <p class="review-text">"${c.reviews}"</p>
     </div>
     <div class="cta-row">
-      <button class="cta-btn cta-save" id="save-btn-${id}" onclick="toggleSave(${id})">${isSaved?'🔖':'☆'}</button>
+      <button class="cta-btn cta-save" id="save-btn-${id}" onclick="toggleSave(${id})">${isSaved ? '🔖' : '☆'}</button>
       <button class="cta-btn cta-main" onclick="window.open('[map.kakao.com](https://map.kakao.com/link/map/${c.name},${c.lat},${c.lng})','_blank')">지도에서 보기 →</button>
     </div>`;
+
   const ov = document.getElementById('detail-overlay');
   ov.style.display = 'flex';
   requestAnimationFrame(() => ov.classList.add('open'));
@@ -521,7 +708,7 @@ function closeDetail(e) {
   if (document.getElementById('detail-sheet').contains(e.target)) return;
   const ov = document.getElementById('detail-overlay');
   ov.classList.remove('open');
-  setTimeout(() => { ov.style.display = 'none'; }, 320);
+  setTimeout(() => { ov.style.display = 'none'; }, 300);
   if (currentTab === 'saved') renderSaved();
 }
 
@@ -531,9 +718,11 @@ function toggleSave(id) {
   if (btn) btn.textContent = savedIds.has(id) ? '🔖' : '☆';
 }
 
+/* ── 탭 전환 ── */
 function switchTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.nav-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
   const isMap = tab === 'map';
   ['map-container','top-bar','list-sheet'].forEach(id =>
     document.getElementById(id).style.display = isMap ? '' : 'none');
