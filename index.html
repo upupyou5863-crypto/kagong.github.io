@@ -21,7 +21,7 @@ body {
   z-index: 1;
 }
 
-/* bottom sheet */
+/* sheet */
 #sheet {
   position: absolute;
   left: 0;
@@ -34,7 +34,6 @@ body {
   border-radius: 24px 24px 0 0;
 
   height: 80vh;
-  max-height: 80vh;
 
   transform: translateY(45vh);
 
@@ -73,6 +72,7 @@ body {
   padding: 12px;
   border-radius: 14px;
   margin-bottom: 10px;
+  transition: all .2s;
 }
 
 .card-title {
@@ -94,6 +94,27 @@ body {
   border: none;
   font-size: 12px;
 }
+
+/* 필터 */
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.filter-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 12px;
+}
+
+.filter-btn.active {
+  background: #3182F6;
+  color: #fff;
+  border-color: #3182F6;
+}
 </style>
 </head>
 
@@ -103,7 +124,15 @@ body {
 
 <div id="sheet">
   <div id="handle"></div>
+
   <div class="header">☕ 카공스팟</div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all')">전체</button>
+    <button class="filter-btn" onclick="setFilter('high')">집중</button>
+    <button class="filter-btn" onclick="setFilter('long')">장시간</button>
+  </div>
+
   <div id="list"></div>
 </div>
 
@@ -113,6 +142,9 @@ let map;
 let cafes = [];
 let markers = [];
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+let currentFilter = "all";
+let activeCafe = null;
 
 /* ---------------- 지도 ---------------- */
 function initMap() {
@@ -129,12 +161,13 @@ function initMap() {
         level: 4
       });
 
-      new kakao.maps.Marker({
-        map,
-        position: new kakao.maps.LatLng(lat, lng)
+      loadCafes(lat, lng);
+
+      kakao.maps.event.addListener(map, "click", () => {
+        setSheet(70);
+        resetHighlight();
       });
 
-      loadCafes(lat, lng);
     });
 
   });
@@ -152,14 +185,7 @@ function loadCafes(lat, lng) {
   .then(res => res.json())
   .then(data => {
 
-    cafes = (data.documents || [])
-      .filter(c => !["보드게임", "PC방", "스터디카페"].some(b => c.place_name.includes(b)))
-      .map(c => ({
-        name: c.place_name,
-        lat: c.y,
-        lng: c.x,
-        address: c.address_name
-      }));
+    cafes = data.documents.map(c => buildCafe(c));
 
     renderList();
     renderMap();
@@ -167,7 +193,79 @@ function loadCafes(lat, lng) {
 
 }
 
-/* ---------------- 지도 마커 ---------------- */
+/* ---------------- 점수 모델 ---------------- */
+function buildCafe(c) {
+
+  let score = 3;
+
+  if (c.place_name.includes("스터디") || c.place_name.includes("라운지")) score += 1.5;
+  if (c.place_name.includes("24")) score += 1;
+  if (c.place_name.includes("스타벅스")) score -= 0.3;
+
+  return {
+    name: c.place_name,
+    address: c.address_name,
+    lat: c.y,
+    lng: c.x,
+    score: Math.max(1, Math.min(5, score))
+  };
+}
+
+/* ---------------- 필터 ---------------- */
+function setFilter(type) {
+  currentFilter = type;
+
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+
+  renderList();
+}
+
+/* ---------------- 필터 로직 ---------------- */
+function applyFilter(list) {
+
+  return list.filter(c => {
+
+    if (currentFilter === "high") return c.score >= 4;
+    if (currentFilter === "long") return c.score >= 3.8;
+
+    return true;
+  });
+}
+
+/* ---------------- 리스트 ---------------- */
+function renderList() {
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  let filtered = applyFilter(cafes);
+
+  filtered.forEach(c => {
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    const isFav = favorites.some(f => f.name === c.name);
+
+    div.innerHTML = `
+      <div class="card-title">${c.name} ⭐ ${c.score.toFixed(1)}</div>
+      <div class="card-sub">${c.address}</div>
+
+      <button class="save-btn"
+        onclick='toggleFavorite(${JSON.stringify(c)})'
+        style="background:${isFav ? '#3182F6':'#E5E8EB'};color:${isFav?'#fff':'#000'}">
+        ${isFav ? "저장됨" : "저장"}
+      </button>
+    `;
+
+    div.onclick = () => highlightFromList(c.name);
+
+    list.appendChild(div);
+  });
+}
+
+/* ---------------- 지도 ---------------- */
 function renderMap() {
 
   markers.forEach(m => m.setMap(null));
@@ -177,6 +275,7 @@ function renderMap() {
 
     const el = document.createElement("div");
     el.innerText = "☕ " + c.name;
+
     el.style = `
       background:#3182F6;
       color:#fff;
@@ -185,6 +284,7 @@ function renderMap() {
       font-size:12px;
       font-weight:700;
       border:2px solid #fff;
+      transition:.2s;
     `;
 
     const marker = new kakao.maps.CustomOverlay({
@@ -195,80 +295,97 @@ function renderMap() {
 
     marker.setMap(map);
     markers.push(marker);
+
+    el.onclick = () => highlightFromMap(c);
   });
 }
 
-/* ---------------- 리스트 ---------------- */
-function renderList() {
+/* ---------------- 하이라이트 ---------------- */
+function highlightFromMap(c) {
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+  resetHighlight();
+  activeCafe = c.name;
 
-  cafes.forEach(c => {
+  setSheet(45);
 
-    const div = document.createElement("div");
-    div.className = "card";
+  scrollToCard(c.name);
+}
 
-    const isFav = favorites.some(f => f.name === c.name);
+function highlightFromList(name) {
 
-    div.innerHTML = `
-      <div class="card-title">${c.name}</div>
-      <div class="card-sub">${c.address}</div>
+  resetHighlight();
 
-      <button class="save-btn"
-        style="background:${isFav ? '#3182F6' : '#E5E8EB'};color:${isFav ? '#fff' : '#333'}"
-        onclick='toggleFavorite(${JSON.stringify(c)})'>
-        ${isFav ? "💙 저장됨" : "🔖 저장"}
-      </button>
-    `;
+  activeCafe = name;
+}
 
-    list.appendChild(div);
+/* ---------------- 카드 이동 ---------------- */
+function scrollToCard(name) {
+
+  document.querySelectorAll(".card").forEach(card => {
+
+    if (card.innerText.includes(name)) {
+
+      card.style.transform = "scale(1.03)";
+      card.style.boxShadow = "0 6px 20px rgba(49,130,246,.2)";
+      card.style.border = "1px solid #3182F6";
+
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+}
+
+/* ---------------- reset ---------------- */
+function resetHighlight() {
+
+  document.querySelectorAll(".card").forEach(c => {
+    c.style = "";
+  });
+
+  markers.forEach(m => {
+    const el = m.getContent();
+    if (el) {
+      el.style.background = "#3182F6";
+      el.style.transform = "";
+    }
   });
 }
 
 /* ---------------- 저장 ---------------- */
 function toggleFavorite(cafe) {
 
-  const exists = favorites.find(f => f.name === cafe.name);
+  let fav = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+  const exists = fav.find(f => f.name === cafe.name);
 
   if (exists) {
-    favorites = favorites.filter(f => f.name !== cafe.name);
+    fav = fav.filter(f => f.name !== cafe.name);
   } else {
-    favorites.push(cafe);
+    fav.push(cafe);
   }
 
-  localStorage.setItem("favorites", JSON.stringify(favorites));
+  localStorage.setItem("favorites", JSON.stringify(fav));
+  favorites = fav;
+
   renderList();
 }
 
-/* ---------------- Bottom Sheet (inertia + snap) ---------------- */
-const sheet = document.getElementById("sheet");
-const handle = document.getElementById("handle");
+/* ---------------- bottom sheet ---------------- */
+let sheet = document.getElementById("sheet");
+let startY, startT, current = 45, dragging = false, velocity = 0;
 
-let startY = 0;
-let startTranslate = 45;
-let current = 45;
-let velocity = 0;
-let lastY = 0;
-let lastT = 0;
-let dragging = false;
-
-function setSheet(v, anim=false){
-  sheet.style.transition = anim ? "0.35s cubic-bezier(.2,.8,.2,1)" : "none";
+function setSheet(v, anim=true) {
+  sheet.style.transition = anim ? "0.3s cubic-bezier(.2,.8,.2,1)" : "none";
   sheet.style.transform = `translateY(${v}vh)`;
   current = v;
 }
 
-handle.addEventListener("mousedown", start);
-handle.addEventListener("touchstart", start);
+document.getElementById("handle").addEventListener("mousedown", start);
+document.getElementById("handle").addEventListener("touchstart", start);
 
 function start(e){
   dragging = true;
   startY = getY(e);
-  startTranslate = current;
-  lastY = startY;
-  lastT = Date.now();
-  sheet.style.transition = "none";
+  startT = Date.now();
 }
 
 window.addEventListener("mousemove", move);
@@ -277,19 +394,13 @@ window.addEventListener("touchmove", move);
 function move(e){
   if(!dragging) return;
 
-  const y = getY(e);
-  const diff = y - startY;
+  let y = getY(e);
+  let diff = y - startY;
 
-  let vh = startTranslate + (diff / window.innerHeight) * 100;
+  let vh = current + (diff / window.innerHeight) * 100;
   vh = Math.max(0, Math.min(70, vh));
 
-  setSheet(vh);
-
-  const now = Date.now();
-  velocity = (y - lastY) / (now - lastT);
-
-  lastY = y;
-  lastT = now;
+  setSheet(vh, false);
 }
 
 window.addEventListener("mouseup", end);
@@ -299,15 +410,13 @@ function end(){
   if(!dragging) return;
   dragging = false;
 
-  let v = current + velocity * 8;
-
-  const snaps = [0, 25, 45];
+  let snaps = [0, 25, 45, 70];
 
   let closest = snaps.reduce((a,b)=>
-    Math.abs(b - v) < Math.abs(a - v) ? b : a
+    Math.abs(b-current) < Math.abs(a-current) ? b : a
   );
 
-  setSheet(closest, true);
+  setSheet(closest);
 }
 
 function getY(e){
@@ -318,6 +427,5 @@ function getY(e){
 window.onload = initMap;
 
 </script>
-
 </body>
 </html>
