@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>카공스팟</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2eb;
+  --card: #ffffff;
+  --ink: #1a1710;
+  --ink2: #6b6558;
+  --ink3: #a8a094;
+  --accent: #d4521a;
+  --border: #ddd8cc;
+  --font: 'Noto Sans KR', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+::-webkit-scrollbar { display: none; }
+body { background: #e8e4d8; font-family: var(--font); overflow: hidden; height: 100dvh; }
+
+#app {
+max-width: 430px;
+margin: 0 auto;
+height: 100dvh;
+position: relative;
+overflow: hidden;
+background: #e8e4d8;
+}
+
+/* ── 지도 영역 ── */
+#map-container {
+position: absolute;
+inset: 0;
+bottom: 60px;
+}
+#kakao-map { width: 100%; height: 100%; }
+
+/* 지도 위 상단 필터 바 */
+#top-bar {
+position: absolute;
+top: 0; left: 0; right: 0;
+z-index: 10;
+padding: 52px 16px 12px;
+background: linear-gradient(to bottom, rgba(245,242,235,.96) 60%, transparent);
+pointer-events: none;
+}
+#top-bar > * { pointer-events: auto; }
+
+.top-title {
+font-size: 13px;
+font-weight: 700;
+color: var(–accent);
+letter-spacing: 1.5px;
+margin-bottom: 10px;
+}
+
+.filter-scroll {
+display: flex;
+gap: 8px;
+overflow-x: auto;
+padding-bottom: 2px;
+}
+
+.chip {
+padding: 7px 14px;
+border-radius: 100px;
+border: 1.5px solid var(–border);
+background: var(–card);
+color: var(–ink2);
+font-size: 12px;
+font-weight: 700;
+cursor: pointer;
+white-space: nowrap;
+font-family: var(–font);
+transition: all .18s;
+box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.chip.active {
+background: var(–ink);
+color: var(–bg);
+border-color: var(–ink);
+}
+
+/* ── 지도 위 하단 카드 리스트 ── */
+#list-sheet {
+position: absolute;
+left: 0; right: 0;
+bottom: 60px;
+z-index: 20;
+transition: transform .32s cubic-bezier(.32,1,.5,1);
+}
+
+#sheet-handle-bar {
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 10px;
+padding: 10px 20px 6px;
+cursor: pointer;
+}
+.handle-line { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.2); }
+#sheet-count { font-size: 12px; color: var(–ink3); font-weight: 600; }
+
+#card-list {
+display: flex;
+gap: 12px;
+overflow-x: auto;
+padding: 0 16px 16px;
+scroll-snap-type: x mandatory;
+}
+
+/* ── 미니 카드 ── */
+.mini-card {
+min-width: 240px; max-width: 240px;
+background: var(–card);
+border-radius: 20px;
+padding: 16px;
+flex-shrink: 0;
+scroll-snap-align: start;
+cursor: pointer;
+box-shadow: 0 4px 20px rgba(0,0,0,.12);
+transition: transform .15s;
+border: 1.5px solid var(–border);
+}
+.mini-card:active { transform: scale(0.97); }
+
+.mini-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.mini-emoji {
+width: 44px; height: 44px;
+background: var(–bg);
+border-radius: 12px;
+display: flex; align-items: center; justify-content: center;
+font-size: 22px; flex-shrink: 0;
+}
+.mini-name { font-size: 15px; font-weight: 700; color: var(–ink); }
+.mini-meta { font-size: 11px; color: var(–ink3); margin-top: 2px; }
+.mini-score { margin-left: auto; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.mini-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.mini-tag { font-size: 10px; padding: 3px 9px; border-radius: 100px; background: #f0ece2; color: var(–ink2); font-weight: 600; }
+
+/* ── 하단 탭바 ── */
+#bottom-nav {
+position: absolute;
+bottom: 0; left: 0; right: 0;
+height: 60px;
+background: var(–card);
+border-top: 1.5px solid var(–border);
+display: flex;
+z-index: 30;
+padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-btn {
+flex: 1; background: none; border: none; cursor: pointer;
+display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 0;
+}
+.nav-icon { font-size: 20px; line-height: 1; transition: transform .2s; }
+.nav-label { font-size: 10px; font-weight: 700; color: var(–ink3); letter-spacing: .5px; transition: color .2s; }
+.nav-btn.active .nav-icon { transform: scale(1.15); }
+.nav-btn.active .nav-label { color: var(–accent); }
+
+/* ── 전체화면 탭 ── */
+.fullscreen {
+position: absolute;
+inset: 0; bottom: 60px;
+background: var(–bg);
+z-index: 25;
+overflow-y: auto;
+display: none;
+padding-bottom: 20px;
+animation: fadeUp .22s ease;
+}
+.fullscreen.active { display: block; }
+
+@keyframes fadeUp {
+from { opacity:0; transform:translateY(8px); }
+to   { opacity:1; transform:translateY(0); }
+}
+
+.full-header {
+padding: 52px 20px 16px;
+background: var(–bg);
+position: sticky; top: 0; z-index: 5;
+border-bottom: 1.5px solid var(–border);
+}
+.full-title { font-size: 22px; font-weight: 900; color: var(–ink); margin-bottom: 14px; }
+
+/* ── 카페 리스트 카드 ── */
+.cafe-card {
+background: var(–card);
+border: 1.5px solid var(–border);
+border-radius: 18px;
+padding: 16px;
+margin: 0 20px 12px;
+cursor: pointer;
+transition: transform .15s;
+position: relative; overflow: hidden;
+}
+.cafe-card:active { transform: scale(0.97); }
+.cafe-card::before {
+content: ‘’; position: absolute;
+top: 0; left: 0; width: 4px; height: 100%;
+background: var(–accent); opacity: 0; transition: opacity .2s;
+}
+.cafe-card:active::before { opacity: 1; }
+
+.cafe-top { display: flex; gap: 12px; align-items: flex-start; }
+.cafe-emoji { width:52px; height:52px; background:var(–bg); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.cafe-info { flex:1; min-width:0; }
+.cafe-name-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.cafe-name { font-size:15px; font-weight:700; color:var(–ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cafe-score { font-size:13px; font-weight:700; flex-shrink:0; }
+.cafe-meta { font-size:11px; color:var(–ink3); margin-top:2px; }
+.cafe-mood { font-size:12px; color:var(–ink2); margin-top:3px; }
+.tag-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:11px; }
+.tag { font-size:11px; padding:4px 10px; border-radius:100px; background:#1a1710; color:#f5f2eb; font-weight:600; white-space:nowrap; }
+.tag.hl { background: var(–accent); }
+
+/* ── 상세 시트 ── */
+#detail-overlay {
+display: none;
+position: fixed; inset: 0;
+background: rgba(0,0,0,.5);
+z-index: 100;
+backdrop-filter: blur(4px);
+align-items: flex-end;
+justify-content: center;
+}
+#detail-overlay.open { display: flex; }
+
+#detail-sheet {
+background: var(–card);
+border-radius: 28px 28px 0 0;
+padding: 0 20px 40px;
+width: 100%; max-width: 430px;
+max-height: 88vh; overflow-y: auto;
+transform: translateY(100%);
+transition: transform .32s cubic-bezier(.32,1,.5,1);
+}
+#detail-overlay.open #detail-sheet { transform: translateY(0); }
+
+.detail-handle { display:flex; justify-content:center; padding:14px 0 10px; }
+.detail-handle-bar { width:40px; height:4px; border-radius:2px; background:var(–border); }
+.detail-name { font-size:20px; font-weight:900; color:var(–ink); }
+.detail-sub { font-size:12px; color:var(–ink3); margin-top:2px; }
+
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+.info-cell { background:#f5f2eb; border-radius:14px; padding:12px 14px; }
+.info-label { font-size:11px; color:var(–ink3); margin-bottom:4px; }
+.info-val { font-size:13px; font-weight:700; color:var(–ink); }
+
+.review-box { background:#f5f2eb; border-radius:14px; padding:14px 16px; margin-bottom:18px; }
+.review-label { font-size:11px; color:var(–ink3); font-weight:600; margin-bottom:6px; }
+.review-text { font-size:13px; color:var(–ink2); line-height:1.65; }
+
+.score-wrap { background:#f5f2eb; border-radius:14px; padding:14px 16px; margin-bottom:14px; }
+.score-label { font-size:11px; color:var(–ink3); font-weight:600; letter-spacing:1px; margin-bottom:10px; }
+.score-bars { display:flex; gap:4px; align-items:center; }
+.bar-seg { flex:1; height:8px; border-radius:4px; background:var(–border); }
+.bar-seg.on { background:var(–accent); }
+.score-num { font-size:16px; font-weight:700; color:var(–accent); margin-left:10px; }
+
+.cta-row { display:flex; gap:10px; }
+.cta-btn { padding:16px; border-radius:14px; border:none; font-size:15px; font-weight:700; font-family:var(–font); cursor:pointer; transition:opacity .15s; }
+.cta-btn:active { opacity:.8; }
+.cta-main { flex:1; background:var(–ink); color:var(–bg); }
+.cta-save { flex:0 0 52px; background:#f5f2eb; color:var(–ink); font-size:20px; }
+
+.empty { text-align:center; padding:60px 20px; color:var(–ink3); }
+.empty-icon { font-size:48px; margin-bottom:12px; }
+</style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- 지도 -->
+
+  <div id="map-container">
+    <div id="kakao-map"></div>
+  </div>
+
+  <!-- 지도 위 필터 -->
+
+  <div id="top-bar">
+    <div class="top-title">☕ 카공스팟</div>
+    <div class="filter-scroll" id="tag-chips"></div>
+  </div>
+
+  <!-- 지도 위 하단 카드 -->
+
+  <div id="list-sheet">
+    <div id="sheet-handle-bar" onclick="toggleSheet()">
+      <div class="handle-line"></div>
+      <span id="sheet-count"></span>
+      <div class="handle-line"></div>
+    </div>
+    <div id="card-list"></div>
+  </div>
+
+  <!-- 탐색 전체화면 -->
+
+  <div id="screen-search" class="fullscreen">
+    <div class="full-header">
+      <div class="full-title">카페 탐색</div>
+      <div class="filter-scroll" id="district-chips" style="margin-bottom:10px;"></div>
+      <div class="filter-scroll" id="tag-chips-search"></div>
+    </div>
+    <div style="padding:12px 20px 4px;">
+      <span id="result-count" style="font-size:12px;color:var(--ink3);font-weight:600;"></span>
+    </div>
+    <div id="search-list"></div>
+  </div>
+
+  <!-- 저장 전체화면 -->
+
+  <div id="screen-saved" class="fullscreen">
+    <div class="full-header">
+      <div class="full-title">저장한 카페</div>
+      <div id="saved-count" style="font-size:12px;color:var(--ink3);font-weight:600;margin-top:4px;"></div>
+    </div>
+    <div id="saved-list" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- 하단 탭바 -->
+
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-tab="map" onclick="switchTab('map')">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">지도</span>
+    </button>
+    <button class="nav-btn" data-tab="search" onclick="switchTab('search')">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">탐색</span>
+    </button>
+    <button class="nav-btn" data-tab="saved" onclick="switchTab('saved')">
+      <span class="nav-icon">🔖</span>
+      <span class="nav-label">저장</span>
+    </button>
+  </nav>
+
+  <!-- 상세 시트 -->
+
+  <div id="detail-overlay" onclick="closeDetail(event)">
+    <div id="detail-sheet">
+      <div class="detail-handle"><div class="detail-handle-bar"></div></div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TAGS = {
+  quiet:  { label:'조용함',      icon:'🤫' },
+  outlet: { label:'콘센트多',    icon:'🔌' },
+  long:   { label:'오래 머물기', icon:'⏳' },
+  group:  { label:'단체 가능',   icon:'👥' },
+  night:  { label:'야간 운영',   icon:'🌙' },
+  laptop: { label:'노트북 추천', icon:'💻' },
+};
+
+const DISTRICTS = ['전체','은평구','서대문구','마포구'];
+
+const CAFES = [
+  { id:1, name:'카페 온도',       district:'마포구',   address:'마포구 연남동 239-5',   hours:'08:00–23:00', score:4.8, tags:['quiet','outlet','laptop','long'],         mood:'따뜻한 우드톤',   reviews:'콘센트 넉넉하고 조용해서 집중 잘 돼요. 2층 창가 자리 강추!', img:'☕', lat:37.5606, lng:126.9229 },
+  { id:2, name:'스터디온',        district:'은평구',   address:'은평구 응암동 11-3',    hours:'07:00–24:00', score:4.9, tags:['outlet','laptop','long','night','quiet'], mood:'모던 스터디형',   reviews:'24시간에 가깝게 운영해서 야간 작업할 때 자주 와요.', img:'📚', lat:37.6017, lng:126.9196 },
+  { id:3, name:'브레인 커피',     district:'서대문구', address:'서대문구 신촌동 77',    hours:'09:00–22:00', score:4.6, tags:['group','outlet','laptop'],               mood:'브라이트 작업실', reviews:'단체석 있고 전원 많아서 팀 프로젝트 때 딱이에요.', img:'🧠', lat:37.5558, lng:126.9369 },
+  { id:4, name:'루프탑 로스터스', district:'마포구',   address:'마포구 합정동 366-17',  hours:'10:00–21:00', score:4.5, tags:['quiet','long','laptop'],                 mood:'인더스트리얼',    reviews:'뷰가 좋고 음악 볼륨 낮아서 작업 분위기 최고.', img:'🏢', lat:37.5494, lng:126.9144 },
+  { id:5, name:'카페 텀블',       district:'은평구',   address:'은평구 불광동 502-4',   hours:'08:00–23:30', score:4.7, tags:['outlet','night','long','laptop'],        mood:'빈티지 카페',    reviews:'밤 11시 넘어도 열려있고 콘센트 자리 많아요.', img:'🕯️', lat:37.6098, lng:126.9312 },
+  { id:6, name:'포커스 라운지',   district:'서대문구', address:'서대문구 홍제동 202-1', hours:'09:00–24:00', score:4.9, tags:['quiet','outlet','laptop','long','night'], mood:'미니멀 작업실',  reviews:'카공 전용 라운지 느낌. 정말 조용하고 효율 200%.', img:'🎧', lat:37.5924, lng:126.9447 },
+];
+
+let currentTab = 'map', activeTags = [], activeDistrict = '전체';
+let savedIds = new Set(), sheetOpen = true;
+let map, overlays = [];
+
+function scoreColor(s) { return s >= 4.8 ? '#2d5a3d' : s >= 4.6 ? '#b07d1a' : '#888'; }
+
+function filtered() {
+  return CAFES.filter(c => {
+    const dOk = activeDistrict === '전체' || c.district === activeDistrict;
+    const tOk = activeTags.length === 0 || activeTags.every(t => c.tags.includes(t));
+    return dOk && tOk;
+  });
+}
+
+/* ── 지도 ── */
+function initMap() {
+  map = new kakao.maps.Map(document.getElementById('kakao-map'), {
+    center: new kakao.maps.LatLng(37.578, 126.929),
+    level: 5
+  });
+  renderOverlays();
+}
+
+function renderOverlays() {
+  overlays.forEach(o => o.setMap(null));
+  overlays = [];
+  filtered().forEach(c => {
+    const el = document.createElement('div');
+    el.style.cssText = `
+      background:#d4521a; color:#fff; border-radius:20px;
+      padding:5px 11px; font-size:12px; font-weight:700;
+      font-family:'Noto Sans KR',sans-serif; white-space:nowrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.3); border:2px solid #fff;
+      cursor:pointer;`;
+    el.textContent = c.img + ' ' + c.name;
+    el.onclick = () => openDetail(c.id);
+    const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(c.lat, c.lng), content: el, yAnchor: 1.4 });
+    ov.setMap(map);
+    overlays.push(ov);
+  });
+}
+
+/* ── 칩 렌더 ── */
+function renderTagChips(cid, fn) {
+  document.getElementById(cid).innerHTML = Object.entries(TAGS).map(([k,v]) =>
+    `<button class="chip${activeTags.includes(k)?' active':''}" onclick="${fn}('${k}')">${v.icon} ${v.label}</button>`
+  ).join('');
+}
+
+function renderDistrictChips() {
+  document.getElementById('district-chips').innerHTML = DISTRICTS.map(d =>
+    `<button class="chip${d===activeDistrict?' active':''}" onclick="setDistrict('${d}')">${d}</button>`
+  ).join('');
+}
+
+/* ── 카드 리스트 ── */
+function renderCardList() {
+  const r = filtered();
+  document.getElementById('sheet-count').textContent = r.length + '개 카페';
+  document.getElementById('card-list').innerHTML = r.map(c => `
+    <div class="mini-card" onclick="openDetail(${c.id})">
+      <div class="mini-top">
+        <div class="mini-emoji">${c.img}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="mini-name">${c.name}</div>
+          <div class="mini-meta">${c.district} · ${c.hours}</div>
+        </div>
+        <div class="mini-score" style="color:${scoreColor(c.score)}">★ ${c.score}</div>
+      </div>
+      <div class="mini-tags">${c.tags.map(t=>`<span class="mini-tag">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function toggleSheet() {
+  sheetOpen = !sheetOpen;
+  document.getElementById('list-sheet').style.transform =
+    sheetOpen ? '' : 'translateY(calc(100% - 42px))';
+}
+
+/* ── 탐색 ── */
+function renderSearchList() {
+  const r = filtered();
+  document.getElementById('result-count').textContent = r.length + '개 카페';
+  const el = document.getElementById('search-list');
+  el.innerHTML = '';
+  if (!r.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>조건에 맞는 카페가 없어요</p></div>`; return; }
+  r.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'cafe-card';
+    d.innerHTML = `
+      <div class="cafe-top">
+        <div class="cafe-emoji">${c.img}</div>
+        <div class="cafe-info">
+          <div class="cafe-name-row"><span class="cafe-name">${c.name}</span><span class="cafe-score" style="color:${scoreColor(c.score)}">★ ${c.score}</span></div>
+          <div class="cafe-meta">${c.district} · ${c.hours}</div>
+          <div class="cafe-mood">${c.mood}</div>
+        </div>
+      </div>
+      <div class="tag-row">${c.tags.map(t=>`<span class="tag${activeTags.includes(t)?' hl':''}">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>`;
+    d.onclick = () => openDetail(c.id);
+    el.appendChild(d);
+  });
+}
+
+/* ── 저장 ── */
+function renderSaved() {
+  const s = CAFES.filter(c => savedIds.has(c.id));
+  document.getElementById('saved-count').textContent = s.length + '곳 저장됨';
+  const el = document.getElementById('saved-list');
+  el.innerHTML = '';
+  if (!s.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">🔖</div><p>아직 저장한 카페가 없어요</p></div>`; return; }
+  s.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'cafe-card';
+    d.innerHTML = `
+      <div class="cafe-top">
+        <div class="cafe-emoji">${c.img}</div>
+        <div class="cafe-info">
+          <div class="cafe-name-row"><span class="cafe-name">${c.name}</span><span class="cafe-score" style="color:${scoreColor(c.score)}">★ ${c.score}</span></div>
+          <div class="cafe-meta">${c.district} · ${c.hours}</div>
+          <div class="cafe-mood">${c.mood}</div>
+        </div>
+      </div>
+      <div class="tag-row">${c.tags.map(t=>`<span class="tag">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>`;
+    d.onclick = () => openDetail(c.id);
+    el.appendChild(d);
+  });
+}
+
+/* ── 상세 ── */
+function openDetail(id) {
+  const c = CAFES.find(x => x.id === id);
+  const isSaved = savedIds.has(id);
+  const bars = [1,2,3,4,5].map(i =>
+    `<div class="bar-seg${i <= Math.round((c.score-3.5)*2+2)?' on':''}"></div>`).join('');
+  document.getElementById('detail-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+      <div style="width:60px;height:60px;background:#f5f2eb;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${c.img}</div>
+      <div><div class="detail-name">${c.name}</div><div class="detail-sub">${c.district} · ${c.mood}</div></div>
+    </div>
+    <div class="score-wrap">
+      <div class="score-label">카공 적합도</div>
+      <div class="score-bars">${bars}<span class="score-num">★ ${c.score}</span></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-cell"><div class="info-label">📍 위치</div><div class="info-val">${c.address}</div></div>
+      <div class="info-cell"><div class="info-label">🕐 운영시간</div><div class="info-val">${c.hours}</div></div>
+    </div>
+    <div class="tag-row" style="margin-bottom:14px;">${c.tags.map(t=>`<span class="tag">${TAGS[t].icon} ${TAGS[t].label}</span>`).join('')}</div>
+    <div class="review-box">
+      <div class="review-label">💬 리뷰 요약</div>
+      <p class="review-text">"${c.reviews}"</p>
+    </div>
+    <div class="cta-row">
+      <button class="cta-btn cta-save" id="save-btn-${id}" onclick="toggleSave(${id})">${isSaved?'🔖':'☆'}</button>
+      <button class="cta-btn cta-main" onclick="window.open('https://map.kakao.com/link/map/${c.name},${c.lat},${c.lng}','_blank')">지도에서 보기 →</button>
+    </div>`;
+  const ov = document.getElementById('detail-overlay');
+  ov.style.display = 'flex';
+  requestAnimationFrame(() => ov.classList.add('open'));
+}
+
+function closeDetail(e) {
+  if (document.getElementById('detail-sheet').contains(e.target)) return;
+  const ov = document.getElementById('detail-overlay');
+  ov.classList.remove('open');
+  setTimeout(() => { ov.style.display = 'none'; }, 320);
+  if (currentTab === 'saved') renderSaved();
+}
+
+function toggleSave(id) {
+  savedIds.has(id) ? savedIds.delete(id) : savedIds.add(id);
+  const btn = document.getElementById('save-btn-' + id);
+  if (btn) btn.textContent = savedIds.has(id) ? '🔖' : '☆';
+}
+
+/* ── 탭 전환 ── */
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const isMap = tab === 'map';
+  ['map-container','top-bar','list-sheet'].forEach(id =>
+    document.getElementById(id).style.display = isMap ? '' : 'none');
+  document.getElementById('screen-search').classList.toggle('active', tab === 'search');
+  document.getElementById('screen-saved').classList.toggle('active', tab === 'saved');
+  if (tab === 'map')    { renderTagChips('tag-chips','toggleTagMap'); renderCardList(); renderOverlays(); }
+  if (tab === 'search') { renderDistrictChips(); renderTagChips('tag-chips-search','toggleTagSearch'); renderSearchList(); }
+  if (tab === 'saved')  renderSaved();
+}
+
+function toggleTagMap(t) {
+  activeTags.includes(t) ? activeTags = activeTags.filter(x=>x!==t) : activeTags.push(t);
+  renderTagChips('tag-chips','toggleTagMap'); renderCardList(); renderOverlays();
+}
+function toggleTagSearch(t) {
+  activeTags.includes(t) ? activeTags = activeTags.filter(x=>x!==t) : activeTags.push(t);
+  renderTagChips('tag-chips-search','toggleTagSearch'); renderSearchList();
+}
+function setDistrict(d) {
+  activeDistrict = d; renderDistrictChips(); renderSearchList();
+}
+
+/* ── 초기화 ── */
+window.addEventListener('load', () => {
+  // 카카오맵 SDK 로드 시도
+  const script = document.createElement('script');
+  // ↓ 여기에 카카오 앱키를 넣으면 실제 지도가 표시됩니다
+  script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=KAKAO_APP_KEY&autoload=false';
+  script.onload = () => kakao.maps.load(initMap);
+  script.onerror = () => {
+    document.getElementById('kakao-map').innerHTML = `
+      <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#e8ece8;gap:10px;padding:20px;text-align:center;">
+        <div style="font-size:52px;">🗺️</div>
+        <p style="font-size:14px;font-weight:700;color:#4a6a4a;">카카오 API 키 연결 시<br>실제 지도가 표시됩니다</p>
+        <p style="font-size:11px;color:#8aaa8a;">아래 카드를 탭해서 카페 정보를 확인하세요</p>
+      </div>`;
+  };
+  document.head.appendChild(script);
+
+  renderTagChips('tag-chips','toggleTagMap');
+  renderCardList();
+});
+</script>
+
+</body>
+</html>
